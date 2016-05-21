@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_all"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="All" />
+        <item
+            android:id="@+id/nav_bus"
+            android:icon="@mipmap/ic_directions_bus"
+            android:title="Bus stop" />
+
+        <item
+            android:id="@+id/nav_railway"
+            android:icon="@mipmap/ic_directions_rail"
+            android:title="Railway station" />
+        <item
+            android:id="@+id/nav_airport"
+            android:icon="@mipmap/ic_flight_white"
+            android:title="Airport" />
+
+
+        <item
+            android:id="@+id/nav_fuel"
+            android:icon="@mipmap/ic_ev_station"
+            android:title="Fuel station" />
+        <item
+            android:id="@+id/nav_hospital"
+            android:icon="@mipmap/ic_local_hospital"
+            android:title="Hospital" />
+        <item
+            android:id="@+id/nav_pharmacy"
+            android:icon="@mipmap/ic_local_pharmacy"
+            android:title="Pharmacy" />
+        <item
+            android:id="@+id/nav_atm"
+            android:icon="@mipmap/ic_local_atm"
+            android:title="ATM" />
+        <item
+            android:id="@+id/nav_Food"
+            android:icon="@mipmap/ic_local_dining"
+            android:title="Dining" />
+        <item
+            android:id="@+id/nav_movie"
+            android:icon="@mipmap/ic_local_movies"
+            android:title="Movie Theatre" />
+
+
+    </group>
+
+    <!--<item android:title="Communicate">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Share" />
+            <item
+                android:id="@+id/nav_send"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Send" />
+        </menu>
+    </item>-->
+
+</menu>
