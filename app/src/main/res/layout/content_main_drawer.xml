@@ -12,9 +12,18 @@
     tools:context="com.pgapps.findme.MainDrawerActivity"
     tools:showIn="@layout/app_bar_main_drawer">
 
-    <include
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/content_frame">
+
+
+    </FrameLayout>
+
+   <!-- <include
         layout="@layout/activity_maps"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent" />-->
 
 </RelativeLayout>

@@ -3,7 +3,7 @@ package com.pgapps.findme;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.view.View;
+import android.support.v4.app.FragmentManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -12,9 +12,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 public class MainDrawerActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,15 +34,20 @@ public class MainDrawerActivity extends AppCompatActivity
             }
         });*/
 
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
+
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setItemIconTintList(null);
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setItemIconTintList(null);
+
+        FragmentManager fragManager = getSupportFragmentManager();
+        fragManager.beginTransaction().replace(R.id.content_frame, new MapsFragment()).commit();
     }
 
     @Override
@@ -68,10 +75,10 @@ public class MainDrawerActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-      /*  if (id == R.id.action_settings) {
+        if (id == R.id.action_settings) {
             return true;
         }
-*/
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -79,11 +86,17 @@ public class MainDrawerActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
+
+
+        FragmentManager fragManager = getSupportFragmentManager();
+
         int id = item.getItemId();
+
 
         switch(id)
         {
             case R.id.nav_all:
+                fragManager.beginTransaction().replace(R.id.map, new MapsFragment()).commit();
                 break;
             case R.id.nav_bus:
                 break;
@@ -104,6 +117,7 @@ public class MainDrawerActivity extends AppCompatActivity
             case R.id.nav_movie:
                 break;
         }
+
 
 
 
