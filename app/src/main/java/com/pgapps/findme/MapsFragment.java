@@ -14,6 +14,7 @@ import android.support.v4.app.FragmentActivity;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -25,6 +26,25 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.pgapps.findme.Services.GPSTracker;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import android.os.AsyncTask;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,10 +54,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-public class MapsFragment extends Fragment implements OnMapReadyCallback {
+public class MapsFragment extends Fragment implements OnMapReadyCallback ,LocationListener {
 
     private GoogleMap mMap;
-    private int busIcon, foodIcon, railIcon, atmIcon, hospitalIcon, pharmacyIcon, airportIcon, moviesIcon, fuelIcon;
+    private int personIcon, busIcon, foodIcon, railIcon, atmIcon, hospitalIcon, pharmacyIcon, airportIcon, moviesIcon, fuelIcon;
     private LocationManager locMan;
     private Location lastLoc;
     private double lat, lng;
@@ -45,6 +65,10 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
     private Marker userMarker;
     private View mView;
     private GPSTracker gps;
+    private String placesSearchStr;
+    private Marker[] placeMarkers;
+    private final int MAX_PLACES = 20;
+    private MarkerOptions[] places;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -68,6 +92,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
         SupportMapFragment mapFragment =  (SupportMapFragment)getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        placeMarkers = new Marker[MAX_PLACES];
 
         busIcon = R.mipmap.ic_directions_bus;
         foodIcon = R.mipmap.ic_local_dining;
@@ -78,6 +103,7 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
         airportIcon = R.mipmap.ic_flight_white;
         moviesIcon = R.mipmap.ic_local_movies;
         fuelIcon = R.mipmap.ic_ev_station;
+        personIcon = R.mipmap.ic_person;
 
         locMan = (LocationManager)getActivity().getSystemService(Context.LOCATION_SERVICE);
 
@@ -133,8 +159,37 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
         mMap.moveCamera(CameraUpdateFactory.newLatLng(lastLatLng));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
 
+        String types = "food|hospital|airport|atm|bus_station|pharmacy|movie_theater|gas_station|train_station";
+        try {
+            types = URLEncoder.encode(types, "UTF-8");
+        } catch (UnsupportedEncodingException e1) {
+
+            e1.printStackTrace();
+        }
+       placesSearchStr = "https://maps.googleapis.com/maps/api/place/nearbysearch/" +
+                "json?location="+lat+","+lng+
+                "&radius=1000&sensor=true" +
+                "&types="+types+
+                "&key=" + getActivity().getResources().getString(R.string.browser_key);
+        new GetPlaces().execute(placesSearchStr);
+        //locMan.requestLocationUpdates(android.LocationManager.NETWORK_PROVIDER, 30000, 100, this);
 
 
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+       /* if(mMap!=null){
+            locMan.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,30000, 100, this);
+        }*/
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        /*if(mMap!=null){
+            locMan.removeUpdates(this);
+        }*/
     }
 
     @Override
@@ -175,5 +230,176 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
         );
         AppIndex.AppIndexApi.end(client, viewAction);
         client.disconnect();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.v("MyMapActivity", "location changed");
+        onMapReady(mMap);
+    }
+
+
+    private class GetPlaces extends AsyncTask<String, Void, String> {
+
+
+        @Override
+        protected String doInBackground(String... placesURL) {
+
+            String placeResult = null;
+            StringBuilder placesBuilder = new StringBuilder();
+            //process search parameter string(s)
+            for (String placeSearchURL : placesURL) {
+            //execute search
+            HttpClient placesClient = new DefaultHttpClient();
+
+                try {
+                    //try to fetch the data
+                    HttpGet placesGet = new HttpGet(placeSearchURL);
+                    HttpResponse placesResponse = placesClient.execute(placesGet);
+                    StatusLine placeSearchStatus = placesResponse.getStatusLine();
+                    if (placeSearchStatus.getStatusCode() == 200) {
+                    //we have an OK response
+                        HttpEntity placesEntity = placesResponse.getEntity();
+                        InputStream placesContent = placesEntity.getContent();
+                        InputStreamReader placesInput = new InputStreamReader(placesContent);
+                        BufferedReader placesReader = new BufferedReader(placesInput);
+                        String lineIn;
+                        while ((lineIn = placesReader.readLine()) != null) {
+                            placesBuilder.append(lineIn);
+                        }
+                        placeResult = placesBuilder.toString();
+                    }
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+            return placeResult;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(String result) {
+            //parse place data returned from Google Places
+            //remove existing markers
+            if (placeMarkers != null) {
+                for (int pm = 0; pm < placeMarkers.length; pm++) {
+                    if (placeMarkers[pm] != null)
+                        placeMarkers[pm].remove();
+                }
+            }
+            try {
+                //parse JSON
+
+                //create JSONObject, pass stinrg returned from doInBackground
+                JSONObject resultObject = new JSONObject(result);
+                //get "results" array
+                JSONArray placesArray = resultObject.getJSONArray("results");
+                //marker options for each place returned
+                places = new MarkerOptions[placesArray.length()];
+                //loop through places
+
+                Log.d("test", "The placesArray length is " + placesArray.length() + "...............");
+
+                for (int p = 0; p < placesArray.length(); p++) {
+                    //parse each place
+                    //if any values are missing we won't show the marker
+                    boolean missingValue = false;
+                    LatLng placeLL = null;
+                    String placeName = "";
+                    String vicinity = "";
+                    int currIcon = personIcon;
+                    try {
+                        //attempt to retrieve place data values
+                        missingValue = false;
+                        //get place at this index
+                        JSONObject placeObject = placesArray.getJSONObject(p);
+                        //get location section
+                        JSONObject loc = placeObject.getJSONObject("geometry")
+                                .getJSONObject("location");
+                        //read lat lng
+                        placeLL = new LatLng(Double.valueOf(loc.getString("lat")),
+                                Double.valueOf(loc.getString("lng")));
+                        //get types
+                        JSONArray types = placeObject.getJSONArray("types");
+                        //loop through types
+                        for (int t = 0; t < types.length(); t++) {
+                            //what type is it
+                            String thisType = types.get(t).toString();
+                            //check for particular types - set icons
+                            if(thisType.contains("food")){
+                                currIcon = foodIcon;
+                                break;
+                            }
+                            else if(thisType.contains("airport")){
+                                currIcon = airportIcon;
+                                break;
+                            }
+                            else if(thisType.contains("atm")){
+                                currIcon = atmIcon;
+                                break;
+                            }
+                            else if(thisType.contains("bus_station")){
+                                currIcon = busIcon;
+                                break;
+                            }
+                            else if(thisType.contains("hospital")){
+                                currIcon = hospitalIcon;
+                                break;
+                            }
+                            else if(thisType.contains("pharmacy")){
+                                currIcon = pharmacyIcon;
+                                break;
+                            }
+                            else if(thisType.contains("movie_theater")){
+                                currIcon = moviesIcon;
+                                break;
+                            }
+                            else if(thisType.contains("gas_station")){
+                                currIcon = fuelIcon;
+                                break;
+                            }
+                            else if(thisType.contains("train_station")){
+                                currIcon = railIcon;
+                                break;
+                            }
+                        }
+                        //vicinity
+                        vicinity = placeObject.getString("vicinity");
+                        //name
+                        placeName = placeObject.getString("name");
+                    } catch (JSONException jse) {
+                        Log.v("PLACES", "missing value");
+                        missingValue = true;
+                        jse.printStackTrace();
+                    }
+                    //if values missing we don't display
+                    if (missingValue) places[p] = null;
+                    else
+                        places[p] = new MarkerOptions()
+                                .position(placeLL)
+                                .title(placeName)
+                                .snippet(vicinity);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (places != null && placeMarkers != null) {
+                Log.d("test", "The placeMarkers length is " + placeMarkers.length + "...............");
+
+                for (int p = 0; p < places.length && p < placeMarkers.length; p++) {
+                    //will be null if a value was missing
+
+                    if (places[p] != null) {
+
+                        placeMarkers[p] = mMap.addMarker(places[p]);
+                    }
+                }
+            }
+        }
     }
 }
