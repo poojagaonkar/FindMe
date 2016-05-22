@@ -19,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -127,8 +128,12 @@ public class MapsFragment extends Fragment implements OnMapReadyCallback {
         LatLng lastLatLng = new LatLng(lat,lng);
         if(userMarker!=null) userMarker.remove();
         userMarker =  mMap.addMarker(new MarkerOptions().position(lastLatLng).title("You are here"));
-        //mMap.moveCamera(CameraUpdateFactory.newLatLng(lastLatLng));
-        mMap.animateCamera(CameraUpdateFactory.newLatLng(lastLatLng), 3000, null);
+
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(lastLatLng));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
+
+
 
     }
 
